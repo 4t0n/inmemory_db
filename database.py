@@ -28,16 +28,21 @@ class Database:
         return True
 
     def commit_transaction(self) -> bool:
-        """Делает коммит всех транзакций."""
+        """Делает коммит текущей транзакции."""
         if not self.transaction_stack:
             return False
         current_transaction = self.transaction_stack.pop()
-        for operation in current_transaction:
-            for key, value in operation.items():
-                if value is None:
-                    self.data.pop(key, None)
-                else:
-                    self.data[key] = value
+        if self.transaction_stack:
+            parent_transaction = self.transaction_stack[-1]
+            for operation in current_transaction:
+                parent_transaction.append(operation)
+        else:
+            for operation in current_transaction:
+                for key, value in operation.items():
+                    if value is None:
+                        self.data.pop(key, None)
+                    else:
+                        self.data[key] = value
         return True
 
     def set_value(self, key: str, value: str) -> None:
